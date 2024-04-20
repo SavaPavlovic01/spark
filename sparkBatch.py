@@ -1,6 +1,7 @@
 from pyspark import *
 import json
 import datetime
+import csv
 import requests
 
 def count_markets(lines):
@@ -127,8 +128,8 @@ def dump_to_sv(data, seperator = ","):
     
     genres_list = list(all_genres)
     all_types_list = list(all_album_types)
-    with open('processed/data{timestamp}.csv'.format(timestamp = datetime.datetime.now()), 'w') as output_file:
-        header = "date,cnt,min_pop,max_pop,avg_pop"
+    with open('processed/data.csv', 'w') as output_file:
+        header = "date,cnt,min_pop,max_pop,avg_pop,full_date"
         for k in genres_list:
             header += ("," + k)
         for k in all_types_list:
@@ -141,6 +142,7 @@ def dump_to_sv(data, seperator = ","):
             output_file.write(str(tuple[1]['min_popularity']) + ",")
             output_file.write(str(tuple[1]['max_popularity']) + ",")
             output_file.write(str(tuple[1]['avg_popularity']) + ",")
+            output_file.write(str(tuple[1]['release_date']) + ",")
             for genre in genres_list:
                 output_file.write(str(tuple[1]['genres_cnt'].get(genre, 0)) + ",")
             for type in all_types_list:
@@ -153,8 +155,12 @@ if __name__ == "__main__":
     conf = SparkConf().setAppName("Batch").setMaster("local[*]")
     sc = SparkContext(conf=conf)
     lines = sc.textFile("./temp/data.txt").map(lambda line: json.loads(line))
-    data = data_by_day(lines)
+    data = count_markets(lines)
     print(data)
-    send_all_to_db(data)
+    with open("processed/markets.csv", 'w') as file:
+        file.write("market,count\n");
+        for tuple in data:
+            file.write(tuple[0] + "," + str(tuple[1]) + "\n");
+        
 
 
