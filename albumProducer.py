@@ -8,6 +8,7 @@ from kafka import KafkaProducer
 url = 'http://127.0.0.1:5000/users.json'
 
 def get_data():
+    cnt = 0
     producer = KafkaProducer(bootstrap_servers = ['localhost:9092'])
     resp = requests.get(url=url, stream=True)
     buffer = ""
@@ -17,6 +18,8 @@ def get_data():
             json.loads(buffer)
             producer.send("users", buffer.encode())
             buffer = ""
+            cnt += 1
+            print(cnt)
             
         except:
             continue

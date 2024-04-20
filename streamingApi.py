@@ -53,7 +53,7 @@ def get_users():
         token = get_token()
         while True:
             yield get_album(token)
-            time.sleep(1)
+            time.sleep(0.01)
     return Response(generate())
 
 if __name__ == "__main__":

@@ -1,7 +1,10 @@
 from kafka import KafkaConsumer
 import json
+import random
 
-batch_size = 2
+batch_size = 100
+
+genres = ["rap", "pop", "noise", "rock", "punk", "post-punk", "post-rock", "prog-rock", "edm", "dubstep", "house", "experimental"]
 
 def transform_album(album):
     album_trimed = {}
@@ -15,7 +18,9 @@ def transform_album(album):
     album_trimed['markets'] = album['available_markets']
 
     album_trimed['genres'] = album['genres']
-
+    if len(album_trimed['genres']) == 0:
+        album_trimed['genres'].append(random.choice(genres))
+        
     album_trimed['album_name'] = album['name']
     
     album_trimed['release_date'] = album['release_date']
@@ -41,10 +46,11 @@ if __name__ == "__main__":
     
     new_albums = []
     while len(new_albums) < batch_size:
-        data = consumer.poll(5000, batch_size)
+        data = consumer.poll(20, batch_size)
         if data:
             for _, message in data.items():
                 for msg in message:
                     new_albums.append(transform_album(json.loads(msg.value)))
+                    print(str(len(new_albums)) + "/" + str(batch_size))
             consumer.commit()
     write_file(new_albums)
